@@ -14,19 +14,19 @@ logging.basicConfig(
 @click.option('-i', '--infile',
               type=click.Path(exists=True),
               required=True,
-              help='Path to BLASTn file you wish to query')
+              help='Path to BLASTn file you wish to query.')
 @click.option('-q', '--query',
               required=True,
               help='Query string to match against. Note that this is case insensitive.')
 @click.option('-c', '--contigs',
               required=False,
               default=None,
-              help='Path to contig file to pull matches from')
+              help='Path to the FASTA contig file to pull matches from.')
 @click.option('-o', '--outdir',
               type=click.Path(exists=True),
               required=False,
               default=None,
-              help='Path to directory to store filtered output according to query string. If not specified, output'
+              help='Path to directory to store filtered output according to query string. If not specified, output '
                    'will be stored in the same directory as the BLASTn file.')
 def cli(infile: str, query: str, contigs: str, outdir: str):
     if contigs is None:
