@@ -10,7 +10,8 @@ logging.basicConfig(
     level=logging.INFO)
 
 
-@click.command(help="")
+@click.command(help="Generated BLASTn file should have the following outfmt format to be parsed correctly: "
+                    "-outfmt '6 qseqid stitle slen length qstart qend pident score'")
 @click.option('-i', '--infile',
               type=click.Path(exists=True),
               required=True,
@@ -22,24 +23,26 @@ logging.basicConfig(
               required=False,
               default=None,
               help='Path to the FASTA contig file to pull matches from.')
-@click.option('-o', '--outdir',
-              type=click.Path(exists=True),
+@click.option('-o', '--outfile',
               required=False,
               default=None,
               help='Path to directory to store filtered output according to query string. If not specified, output '
                    'will be stored in the same directory as the BLASTn file.')
-def cli(infile: str, query: str, contigs: str, outdir: str):
+@click.option('-d', '--delimiter',
+              default="\t",
+              required=False,
+              help='Delimiter used in your BLASTn file. Defaults to tab (\t) delimited. To change to comma delimited, '
+                   'use {--delimiter ","}')
+def cli(infile: str, query: str, contigs: str, outfile: str, delimiter: str):
     if contigs is None:
         logging.info("No contig FASTA file provided. Only performing query on BLASTn file.")
         contig_flag = False
     else:
         contig_flag = True
 
-    # Output directory handling
-    if outdir is None:
-        outdir = os.path.dirname(infile)
-    elif not os.path.isdir(outdir):
-        os.mkdir(outdir)
+    # Output file handling
+    if outfile is None:
+        outfile = os.path.join(os.path.dirname(infile), "BLASTn_search_output.fasta")
 
     hits = query_blastn(infile, query)
 
@@ -47,7 +50,7 @@ def cli(infile: str, query: str, contigs: str, outdir: str):
         logging.info(f"No hits found matching query '{query}'. Quitting.")
         quit()
 
-    node_dict = extract_nodes(hits)
+    node_dict = extract_nodes(hits, delimiter)
 
     logging.info(f"Hits matching query '{query}':")
     for hit in hits:
@@ -55,7 +58,7 @@ def cli(infile: str, query: str, contigs: str, outdir: str):
 
     if contig_flag:
         logging.info(f"Extracting contigs from {contigs}")
-        outfasta = extract_contigs(contigs, node_dict, outdir)
+        outfasta = extract_contigs(contigs, node_dict, outfile, delimiter)
         logging.info(f"Extracted contigs available at {outfasta}")
 
     logging.info("Script complete")
@@ -89,22 +92,22 @@ def query_blastn(infile: str, query: str) -> list:
     return hits
 
 
-def extract_nodes(hits) -> dict:
-    nodes = [hit.split(",")[0] for hit in hits]  # Parses out only the node name
+def extract_nodes(hits, delimiter) -> dict:
+    nodes = [hit.split(delimiter)[0] for hit in hits]  # Parses out only the node name
     node_dict = dict(zip(nodes, hits))
     return node_dict
 
 
-def extract_contigs(contigs: str, node_dict: dict, outdir: str) -> str:
+def extract_contigs(contigs: str, node_dict: dict, outfile: str, delimiter: str) -> str:
     """
     Searches through a FASTA file and extracts only contigs that are in the provided node list
     :param contigs: FASTA file
     :param node_dict: Dictionary generated with extract_nodes()
-    :param outdir: String path to output directory
+    :param outfile: String path to output file
+    :param delimiter: String delimiter to split BLASTn file on (defaults to tab)
     :return: String path to output FASTA
     """
-    outname = os.path.join(outdir, "blastn_search_output.fasta")
-    outfile = open(outname, "w")
+    outfile_ = open(outfile, "w")
 
     write_flag = False
     with open(os.path.abspath(contigs), 'r') as infile:
@@ -112,15 +115,15 @@ def extract_contigs(contigs: str, node_dict: dict, outdir: str) -> str:
             if line.startswith(">"):
                 for node, hit in node_dict.items():
                     if node in line:
-                        outfile.write(">" + node.rsplit("_", 2)[0] + " " + "".join(hit.split(",")[1:3]) + "\n")
+                        outfile_.write(">" + node.rsplit("_", 2)[0] + " " + "".join(hit.split(delimiter)[1:3]) + "\n")
                         write_flag = True
                         break
                     else:
                         write_flag = False
             elif write_flag:
-                outfile.write(line)
-    outfile.close()
-    return outname
+                outfile_.write(line)
+        outfile_.close()
+    return outfile
 
 
 if __name__ == "__main__":
