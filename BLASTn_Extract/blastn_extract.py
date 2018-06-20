@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Forest Dussault"
 __email__ = "forest.dussault@canada.ca"
 
@@ -23,31 +23,38 @@ def print_version(ctx, param, value):
     quit()
 
 
-@click.command(help="Generated BLASTn file should have the following outfmt format to be parsed correctly: "
+@click.command(help="This script will take an input query string and pull out all hits that match from a corresponding "
+                    "BLASTn file. It will then extract all matching hits from an input contig FASTA file (if provided)."
+                    ""
+                    "Note that the BLASTn file should have the following outfmt format to be parsed correctly: "
                     "-outfmt '6 qseqid stitle slen length qstart qend pident score'")
 @click.option('-i', '--infile',
               type=click.Path(exists=True),
               required=True,
-              help='Path to BLASTn file you wish to query.')
+              help='Path to the BLASTn file you wish to query.')
 @click.option('-q', '--query',
+              type=click.STRING,
               required=True,
               help='Query string to match against. Note that this is case insensitive.')
 @click.option('-c', '--contigs',
+              type=click.Path(exists=True),
               required=False,
               default=None,
               help='Path to the FASTA contig file to pull matches from.')
 @click.option('-o', '--outfile',
+              type=click.Path(exists=False),
               required=False,
               default=None,
-              help='Path to output file. If not specified, the output '
+              help='Path to the desired output file. If not specified, the output '
                    'will be stored in the same directory as the BLASTn file with a generic name.')
 @click.option('-d', '--delimiter',
+              type=click.STRING,
               default="\t",
               required=False,
-              help='Delimiter used in your BLASTn file. Defaults to tab (\t) delimited. To change to comma delimited, '
-                   'use {--delimiter ","}')
+              help='Delimiter used in your BLASTn file. Defaults to tab (\t) delimited. e.g. to change to comma '
+                   'delimited use {--delimiter ","}')
 @click.option('--version',
-              help="Specify this flag to print the version and quit.",
+              help="Specify this flag to print the version and exit.",
               is_flag=True,
               is_eager=True,
               callback=print_version,
