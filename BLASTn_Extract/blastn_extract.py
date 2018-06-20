@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-__version__ = "0.0.6"
+__version__ = "0.1.0"
 __author__ = "Forest Dussault"
 __email__ = "forest.dussault@canada.ca"
 
@@ -12,6 +12,15 @@ script = os.path.basename(__file__)
 logging.basicConfig(
     format=f'\033[92m \033[1m {script}:\033[0m %(message)s ',
     level=logging.INFO)
+
+
+def print_version(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    logging.info(f"Version: {__version__}")
+    logging.info(f"Author: {__author__}")
+    logging.info(f"Email: {__email__}")
+    quit()
 
 
 @click.command(help="Generated BLASTn file should have the following outfmt format to be parsed correctly: "
@@ -38,14 +47,12 @@ logging.basicConfig(
               help='Delimiter used in your BLASTn file. Defaults to tab (\t) delimited. To change to comma delimited, '
                    'use {--delimiter ","}')
 @click.option('--version',
-              is_flag=True)
-def cli(infile: str, query: str, contigs: str, outfile: str, delimiter: str, version: bool):
-    if version:
-        logging.info(f"Version: {__version__}")
-        logging.info(f"Author: {__author__}")
-        logging.info(f"Email: {__email__}")
-        quit()
-
+              help="Specify this flag to print the version and quit.",
+              is_flag=True,
+              is_eager=True,
+              callback=print_version,
+              expose_value=False)
+def cli(infile: str, query: str, contigs: str, outfile: str, delimiter: str):
     if contigs is None:
         logging.info("No contig FASTA file provided. Only performing query on BLASTn file.")
         contig_flag = False
