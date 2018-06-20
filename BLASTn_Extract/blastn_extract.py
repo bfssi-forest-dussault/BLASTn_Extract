@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+__version__ = "0.0.6"
+__author__ = "Forest Dussault"
+__email__ = "forest.dussault@canada.ca"
+
 import os
 import click
 import logging
@@ -26,14 +30,22 @@ logging.basicConfig(
 @click.option('-o', '--outfile',
               required=False,
               default=None,
-              help='Path to directory to store filtered output according to query string. If not specified, output '
-                   'will be stored in the same directory as the BLASTn file.')
+              help='Path to output file. If not specified, the output '
+                   'will be stored in the same directory as the BLASTn file with a generic name.')
 @click.option('-d', '--delimiter',
               default="\t",
               required=False,
               help='Delimiter used in your BLASTn file. Defaults to tab (\t) delimited. To change to comma delimited, '
                    'use {--delimiter ","}')
-def cli(infile: str, query: str, contigs: str, outfile: str, delimiter: str):
+@click.option('--version',
+              is_flag=True)
+def cli(infile: str, query: str, contigs: str, outfile: str, delimiter: str, version: bool):
+    if version:
+        logging.info(f"Version: {__version__}")
+        logging.info(f"Author: {__author__}")
+        logging.info(f"Email: {__email__}")
+        quit()
+
     if contigs is None:
         logging.info("No contig FASTA file provided. Only performing query on BLASTn file.")
         contig_flag = False
@@ -44,6 +56,7 @@ def cli(infile: str, query: str, contigs: str, outfile: str, delimiter: str):
     if outfile is None:
         outfile = os.path.join(os.path.dirname(infile), "BLASTn_search_output.fasta")
 
+    # Run query against input file to generate hits
     hits = query_blastn(infile, query)
 
     if len(hits) == 0:
@@ -60,8 +73,6 @@ def cli(infile: str, query: str, contigs: str, outfile: str, delimiter: str):
         logging.info(f"Extracting contigs from {contigs}")
         outfasta = extract_contigs(contigs, node_dict, outfile, delimiter)
         logging.info(f"Extracted contigs available at {outfasta}")
-
-    logging.info("Script complete")
 
 
 def query_blastn(infile: str, query: str) -> list:
