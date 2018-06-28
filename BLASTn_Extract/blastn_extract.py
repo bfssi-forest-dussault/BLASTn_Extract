@@ -51,8 +51,8 @@ def print_version(ctx, param, value):
               type=click.STRING,
               default="\t",
               required=False,
-              help='Delimiter used in your BLASTn file. Defaults to tab (\t) delimited. e.g. to change to comma '
-                   'delimited use {--delimiter ","}')
+              help='Delimiter used in your BLASTn file e.g. to change to comma '
+                   'delimited use --delimiter ",". Defaults to tab delimited.')
 @click.option('--version',
               help="Specify this flag to print the version and exit.",
               is_flag=True,
